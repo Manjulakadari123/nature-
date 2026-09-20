@@ -12,9 +12,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 git branch: 'main',
-                    stage('Checkout') {
-                       steps {
-                            git 'https://github.com/Manjulakadari123/nature-.git'
+                     url: 'https://github.com/Manjulakadari123/nature-.git'
     }
 }
             }
