@@ -41,10 +41,22 @@ pipeline {
         }
 
         stage('Docker Push') {
-            steps {
-                sh 'docker push ${IMAGE_NAME}:${IMAGE_TAG}'
-            }
+             steps {
+        withCredentials([
+            usernamePassword(
+                credentialsId: 'dockerhub-creds',
+                usernameVariable: 'DOCKER_USERNAME',
+                passwordVariable: 'DOCKER_PASSWORD'
+            )
+        ]) {
+            sh '''
+                echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+                docker push ${IMAGE_NAME}:${IMAGE_TAG}
+                docker logout
+            '''
         }
+    }
+}
 
         stage('Deploy') {
             steps {
