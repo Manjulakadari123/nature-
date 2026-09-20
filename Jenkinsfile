@@ -66,7 +66,7 @@ pipeline {
 
                     docker run -d \
                       --name nature-app \
-                      -p 5000:5000 \
+                      -p 5001:5000 \
                       ${IMAGE_NAME}:${IMAGE_TAG}
                 '''
             }
