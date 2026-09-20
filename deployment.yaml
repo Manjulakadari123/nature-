@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nature-app
+spec:
+  replicas: 3
+
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+
+  selector:
+    matchLabels:
+      app: nature-app
+
+  template:
+    metadata:
+      labels:
+        app: nature-app
+
+    spec:
+      containers:
+        - name: nature-app
+          image: manjulakadari/nature-app:v1
+
+          ports:
+            - containerPort: 5000
+
+          env:
+            - name: APP_VERSION
+              value: "v1"
+
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 5000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+
+            limits:
+              cpu: "500m"
+              memory: "256Mi"

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Nature Explorer</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #eef7ee;
+            text-align: center;
+        }
+
+        header {
+            background: #2e7d32;
+            color: white;
+            padding: 25px;
+        }
+
+        h1 {
+            margin: 0;
+        }
+
+        .container {
+            padding: 40px 20px;
+        }
+
+        .card {
+            max-width: 700px;
+            margin: auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .nature-image {
+            width: 100%;
+            max-width: 600px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .version {
+            font-size: 20px;
+            font-weight: bold;
+            color: #2e7d32;
+        }
+
+        footer {
+            margin-top: 40px;
+            padding: 20px;
+            background: #1b5e20;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1>🌿 Nature Explorer</h1>
+        <p>Explore the beauty of nature</p>
+    </header>
+
+    <div class="container">
+
+        <div class="card">
+
+            <h2>Welcome to Nature Explorer</h2>
+
+            <p>
+                Discover forests, mountains, waterfalls and
+                the beauty of the natural world.
+            </p>
+
+            <img
+                class="nature-image"
+                src="https://images.unsplash.com/photo-1441974231531-c6227db76b6e"
+                alt="Nature Forest"
+            >
+
+            <p class="version">
+                CI/CD Deployment Successful 🚀
+            </p>
+
+            <p>
+                Application Version:
+                <strong id="version">Loading...</strong>
+            </p>
+
+        </div>
+
+    </div>
+
+    <footer>
+        Nature Explorer | Jenkins + Docker + Kubernetes
+    </footer>
+
+    <script>
+        fetch("/version")
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById("version").textContent =
+                    data.version;
+            })
+            .catch(() => {
+                document.getElementById("version").textContent =
+                    "Unknown";
+            });
+    </script>
+
+</body>
+</html>

@@ -3,77 +3,86 @@ pipeline {
     agent any
 
     environment {
-        APP_NAME = "jenkins-node-app"
-        DOCKER_IMAGE = "manjulakadari/jenkins-node-app"
-        IMAGE_TAG = "${BUILD_NUMBER}"
+        IMAGE_NAME = "manjulakadari/nature-app"
+        IMAGE_TAG = "v${BUILD_NUMBER}"
     }
 
     stages {
 
         stage('Checkout') {
             steps {
-                echo 'Checking out source code...'
-                checkout scm
+                git branch: 'main',
+                    url: 'https://github.com/Manjulakadari123/Nature-Application.git'
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                dir('app') {
+                    sh 'npm install'
+                }
             }
         }
 
         stage('Build') {
             steps {
-                echo 'Installing dependencies...'
-                sh 'npm install'
-                sh 'npm run build'
+                sh 'echo "Building Nature Application..."'
+                sh 'test -f app/server.js'
             }
         }
 
         stage('Test') {
             steps {
-                echo 'Running automated tests...'
-                sh 'npm test'
-            }
-        }
-
-        stage('Package') {
-            steps {
-                echo 'Packaging application...'
-                sh 'npm run package'
+                dir('app') {
+                    sh 'node --check server.js'
+                }
             }
         }
 
         stage('Docker Build') {
             steps {
-                echo 'Building Docker image...'
-
-                sh '''
-                    docker build \
-                    -t ${DOCKER_IMAGE}:${IMAGE_TAG} \
-                    -t ${DOCKER_IMAGE}:latest .
-                '''
+                sh 'docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .'
             }
         }
 
         stage('Docker Push') {
             steps {
-                echo 'Pushing Docker image to Docker Hub...'
-
                 withCredentials([
                     usernamePassword(
                         credentialsId: 'dockerhub-creds',
-                        usernameVariable: 'manjulakadari',
+                        usernameVariable: 'DOCKER_USER',
                         passwordVariable: 'DOCKER_PASSWORD'
                     )
                 ]) {
-
                     sh '''
                         echo "$DOCKER_PASSWORD" | docker login \
-                        -u "$DOCKER_USERNAME" \
+                        -u "$DOCKER_USER" \
                         --password-stdin
 
-                        docker push ${DOCKER_IMAGE}:${IMAGE_TAG}
-                        docker push ${DOCKER_IMAGE}:latest
-
-                        docker logout
+                        docker push ${IMAGE_NAME}:${IMAGE_TAG}
                     '''
                 }
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                sh '''
+                    sed "s|IMAGE_PLACEHOLDER|${IMAGE_NAME}:${IMAGE_TAG}|g" \
+                    k8s/deployment-template.yaml > k8s/deployment-generated.yaml
+
+                    kubectl apply -f k8s/deployment-generated.yaml
+                    kubectl apply -f k8s/service.yaml
+                '''
+            }
+        }
+
+        stage('Verify') {
+            steps {
+                sh '''
+                    kubectl rollout status deployment/nature-app --timeout=120s
+                    kubectl get pods
+                '''
             }
         }
     }
@@ -84,7 +93,7 @@ pipeline {
         }
 
         failure {
-            echo 'Pipeline failed. Check the Jenkins console output.'
+            echo 'CI/CD Pipeline failed!'
         }
     }
 }
