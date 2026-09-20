@@ -3,8 +3,8 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = "manjulakadari/nature-app"
-        IMAGE_TAG = "v${BUILD_NUMBER}"
+        IMAGE_NAME = 'manjulakadari/nature-app'
+        IMAGE_TAG = 'v1'
     }
 
     stages {
@@ -12,32 +12,25 @@ pipeline {
         stage('Checkout') {
             steps {
                 git branch: 'main',
-                     url: 'https://github.com/Manjulakadari123/nature-.git'
-    }
-}
+                    url: 'https://github.com/Manjulakadari123/nature-.git'
             }
         }
 
         stage('Install Dependencies') {
             steps {
-                dir('app') {
-                    sh 'npm install'
-                }
+                sh 'npm install'
             }
         }
 
         stage('Build') {
             steps {
-                sh 'echo "Building Nature Application..."'
-                sh 'test -f app/server.js'
+                sh 'echo "Build completed successfully"'
             }
         }
 
         stage('Test') {
             steps {
-                dir('app') {
-                    sh 'node --check server.js'
-                }
+                sh 'node --check server.js'
             }
         }
 
@@ -49,32 +42,20 @@ pipeline {
 
         stage('Docker Push') {
             steps {
-                withCredentials([
-                    usernamePassword(
-                        credentialsId: 'dockerhub-creds',
-                        usernameVariable: 'DOCKER_USER',
-                        passwordVariable: 'DOCKER_PASSWORD'
-                    )
-                ]) {
-                    sh '''
-                        echo "$DOCKER_PASSWORD" | docker login \
-                        -u "$DOCKER_USER" \
-                        --password-stdin
-
-                        docker push ${IMAGE_NAME}:${IMAGE_TAG}
-                    '''
-                }
+                sh 'docker push ${IMAGE_NAME}:${IMAGE_TAG}'
             }
         }
 
         stage('Deploy') {
             steps {
                 sh '''
-                    sed "s|IMAGE_PLACEHOLDER|${IMAGE_NAME}:${IMAGE_TAG}|g" \
-                    k8s/deployment-template.yaml > k8s/deployment-generated.yaml
+                    docker stop nature-app || true
+                    docker rm nature-app || true
 
-                    kubectl apply -f k8s/deployment-generated.yaml
-                    kubectl apply -f k8s/service.yaml
+                    docker run -d \
+                      --name nature-app \
+                      -p 5000:5000 \
+                      ${IMAGE_NAME}:${IMAGE_TAG}
                 '''
             }
         }
@@ -82,12 +63,12 @@ pipeline {
         stage('Verify') {
             steps {
                 sh '''
-                    kubectl rollout status deployment/nature-app --timeout=120s
-                    kubectl get pods
+                    sleep 5
+                    curl -f http://localhost:5000/health
                 '''
             }
         }
-    
+    }
 
     post {
         success {
@@ -98,4 +79,4 @@ pipeline {
             echo 'CI/CD Pipeline failed!'
         }
     }
-
+}
